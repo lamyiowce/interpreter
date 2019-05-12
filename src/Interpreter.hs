@@ -8,15 +8,18 @@ import Control.Monad.Reader
 import Data.Map.Lazy
 import ErrM
 data Value = ValInt Integer | ValBool Bool | ValList [Value] | ValFun [Ident] LazyValue deriving (Show, Eq)
-data LazyValue = LazyVal Expr Env Store deriving (Show, Eq)
+--data LazyValue = LazyVal Expr Env Store deriving (Show, Eq)
+data LazyValue = LazyVal Expr Env deriving (Show, Eq)
 type Loc = Integer
-type Env = Map Ident Loc
-type Store = Map Loc LazyValue
+type Env = Map Ident LazyValue
+--type Store = Map Loc LazyValue
 
-failure :: Expr -> ReaderT (Env, Store) Err Value
+--failure :: Expr -> ReaderT (Env, Store) Err Value
+failure :: Expr -> ReaderT Env Err Value
 failure x = fail $ "Not implemented yet: " ++ show x
 
-transLit :: Lit -> ReaderT (Env, Store) Err Value
+--transLit :: Lit -> ReaderT (Env, Store) Err Value
+transLit :: Lit -> ReaderT Env Err Value
 transLit x = case x of
   LitInt integer -> return $ ValInt integer
   LitTrue -> return $ ValBool True
@@ -44,16 +47,28 @@ transRelOp x = case x of
   EQU -> (==)
   NE -> (/=)
 
-transExpr :: Expr -> ReaderT (Env, Store) Err Value
+--transExpr :: Expr -> ReaderT (Env, Store) Err Value
+transExpr :: Expr -> ReaderT Env Err Value
 transExpr x = case x of
   EVar ident@(Ident idString) -> do
-    (env, store) <- ask
-    value <- case lookup ident env >>= (\loc -> lookup loc store) of
-            Just (LazyVal expr lazyEnv lazyStore) -> local (\_ -> (lazyEnv, lazyStore)) (transExpr expr)
+--    (env, store) <- ask
+    env <- ask
+--    value <- case lookup ident env >>= (\loc -> lookup loc store) of
+    value <- case lookup ident env of
+--            Just (LazyVal expr lazyEnv lazyStore) -> local (\_ -> (lazyEnv, lazyStore)) (transExpr expr)
+            Just (LazyVal expr lazyEnv) -> local (\_ -> lazyEnv) (transExpr expr)
             Nothing -> fail $ "Variable undeclared: " ++ idString
     return value
   ELit lit -> transLit lit
-  EApp expr1 expr2 -> failure x
+  EApp expr1 expr2 -> do
+    ValFun binds (LazyVal lazyExpr lazyEnv) <- transExpr expr1
+    env <- ask
+    case binds of
+      ident:[] -> local (\_ ->  insert ident (LazyVal expr2 env) lazyEnv) (transExpr lazyExpr)
+      ident:otherBinds -> return $ ValFun otherBinds (LazyVal lazyExpr (insert ident (LazyVal expr2 env) lazyEnv))
+
+
+
   ECons expr1 expr2 -> do
     v1 <- transExpr expr1
     ValList v2 <- transExpr expr2
@@ -97,15 +112,19 @@ transExpr x = case x of
   Case expr alts -> failure x
 
   Lambda (BindMulti binds) expr -> do
-    (e, s) <- ask
-    return $ ValFun (Prelude.map (\(BindElemT ident _) -> ident) binds) (LazyVal expr e s)
+--    (e, s) <- ask
+    env <- ask
+--    return $ ValFun (Prelude.map (\(BindElemT ident _) -> ident) binds) (LazyVal expr e s)
+    return $ ValFun (Prelude.map (\(BindElemT ident _) -> ident) binds) (LazyVal expr env)
   Let decls expr -> failure x
 
-evalExpr :: (Env, Store) -> Expr -> Err Value
+--evalExpr :: (Env, Store) -> Expr -> Err Value
+evalExpr :: Env -> Expr -> Err Value
 evalExpr s exp = runReaderT (transExpr exp) s
 
 parse :: String -> Err Value
-parse s = pExpr (myLexer s) >>= evalExpr (empty, empty)
+--parse s = pExpr (myLexer s) >>= evalExpr (empty, empty)
+parse s = pExpr (myLexer s) >>= evalExpr empty
 --interpretDecl :: Decl -> (Env, Store)
 
 --interpret :: Prog -> (Env, Store)
