@@ -1,0 +1,14 @@
+// Cases example.
+cases :: Int = case x of {
+	(y :: Bool) -> 23;
+	12:[23] -> 11;
+	x:(xs :: List Int) -> 1244;
+	a:b:c:d:rest -> 124;
+	p@x:xs -> x:p;
+	s -> 12
+};
+
+cases2 :: Int = case x of {
+	Some a -> 1;
+	Nothing -> 0
+};

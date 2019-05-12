@@ -1,0 +1,107 @@
+-- Based on: 
+-- github.com/BNFC/bnfc/blob/master/examples/haskell-core/Core.cf
+-- mimuw.edu.pl/~ben/Zajecia/Mrj2018/Latte/Latte.cf
+
+Program. Prog  ::= [Decl];
+
+-- Literals ----------------------------------------------
+
+LitInt.      Lit ::= Integer ;
+LitTrue.     Lit ::= "true" ;
+LitFalse.    Lit ::= "false" ;
+LitList.     Lit ::= "[" [Expr] "]" ;
+
+-- Expressions ---------------------------------------------
+
+EVar.      Expr8 ::= Ident ;
+ELit.      Expr8 ::= Lit ;
+EApp.      Expr7 ::= Expr7 Expr8 ;
+Neg.       Expr3 ::= "-" Expr4 ;
+Not.       Expr6 ::= "!" Expr7 ;
+ECons.     Expr5 ::= Expr5 ":" Expr6 ;
+EMul.      Expr4 ::= Expr4 MulOp Expr5 ;
+EAdd.      Expr3 ::= Expr3 AddOp Expr4 ;
+ERel.      Expr2 ::= Expr2 RelOp Expr3 ;
+EAnd.      Expr1 ::= Expr2 "&&" Expr1 ;
+EOr.       Expr  ::= Expr1 "||" Expr ;
+Lambda.    Expr  ::= "\\" Bind "->" Expr;
+Let.       Expr  ::= "let" [Decl] "in" Expr ;
+Case.      Expr  ::= "case" Expr2 "of" "{" [Alt] "}"; 
+If.        Expr  ::= "if" Expr "then" Expr "else" Expr;
+
+coercions  Expr 8 ;
+separator  Expr "," ;
+
+-- Operators -----------------------------------------------
+
+Plus.      AddOp ::= "+" ;
+Minus.     AddOp ::= "-" ;
+Times.     MulOp ::= "*" ;
+Div.       MulOp ::= "/" ;
+LTH.       RelOp ::= "<" ;
+LE.        RelOp ::= "<=" ;
+GTH.       RelOp ::= ">" ;
+GE.        RelOp ::= ">=" ;
+EQU.       RelOp ::= "==" ;
+NE.        RelOp ::= "!=" ;
+
+-- Declarations ------------------------------------------
+
+-- Variable and functions --------------------------------
+VDecl.  Decl ::= Ident "::" Ty "=" Expr ;
+FDecl.  Decl ::= Ident [FunArgIdent] "::" Ty "=" Expr ;
+FunArgIdentT. FunArgIdent ::= Ident ;
+separator nonempty FunArgIdent "" ; 
+
+-- Algebraic data types ----------------------------------
+DDecl.            Decl ::= "data" Ident [ConstrArg] "=" [ConstrDef] ;
+Constr.      ConstrDef ::= Ident [ConstrArg] ;
+ConstrArgDef.ConstrArg ::= Ident ;
+
+separator ConstrArg "" ;
+separator nonempty ConstrDef "|" ;
+
+separator Decl ";" ;
+
+-- Types --------------------------------------------------
+
+TVar.     Ty2  ::= Ident ;
+TList.    Ty1  ::= "List" Ty ;
+TApp.     Ty1  ::= Ty2 Ty1 ;
+TBool.    Ty1  ::= "Bool" ;
+TInt.     Ty1  ::= "Int" ;
+TArrow.   Ty   ::= Ty1 "->" Ty ;
+
+coercions Ty 2 ;
+
+-- Comments -----------------------------------------------
+
+comment "//" ;
+comment "/*" "*/" ;
+
+-- Binding ------------------------------------------------
+
+BindMulti.      Bind ::= "(" [BindElem] ")";
+BindElemT.  BindElem ::= Ident "::" Ty;
+
+separator nonempty BindElem "," ;
+
+-- alternatives and pattern matching ----------------------
+
+AltCase.  Alt ::= TopPattern "->" Expr; 
+
+TopPatternAt.   TopPattern ::= Ident "@" Pattern ;
+TopPatternNo.   TopPattern ::= Pattern ;
+PatData.           Pattern ::= Ident [PatConstrArg] ;
+PatBind.           Pattern ::= Bind ;
+PatLit.            Pattern ::= Lit ;
+PatIdent.          Pattern ::= Ident ;
+PatDefault.        Pattern ::= "_" ;
+PatHeadIdent.      Pattern ::= Ident ":" Pattern ;
+PatHeadLit.        Pattern ::= Lit ":" Pattern ;
+
+PatConstrArgDef.PatConstrArg ::= Ident ;
+separator nonempty PatConstrArg "" ;
+
+
+separator nonempty Alt ";" ;

@@ -1,0 +1,5 @@
+// Closure
+f x :: Int -> Int -> Int =
+	let g :: Int -> Int = \(y :: Int) -> y+x in
+		g;
+
