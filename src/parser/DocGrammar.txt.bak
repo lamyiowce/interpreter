@@ -27,10 +27,9 @@ Integer literals //Integer// are nonempty sequences of digits.
 The set of reserved words is the set of terminals appearing in the grammar. Those reserved words that consist of non-letter characters are called symbols, and they are treated in a different way from those that are similar to identifiers. The lexer follows rules familiar from languages like Haskell, C, and Java, including longest match and spacing conventions.
 
 The reserved words used in grammar are the following:
-  | ``Bool`` | ``Int`` | ``List`` | ``case``
-  | ``data`` | ``else`` | ``false`` | ``if``
-  | ``in`` | ``let`` | ``of`` | ``then``
-  | ``true`` |  |  | 
+  | ``Bool`` | ``Int`` | ``case`` | ``data``
+  | ``else`` | ``false`` | ``if`` | ``in``
+  | ``let`` | ``of`` | ``then`` | ``true``
 
 The symbols used in grammar are the following:
   | [ | ] | - | !
@@ -61,15 +60,15 @@ All other symbols are terminals.
   |  |  **|**  | ``(`` //Expr// ``)`` 
   | //Expr7// | -> | //Expr7// //Expr8// 
   |  |  **|**  | //Expr8// 
-  | //Expr6// | -> | ``-`` //Expr7// 
-  |  |  **|**  | ``!`` //Expr7// 
+  | //Expr3// | -> | ``-`` //Expr4// 
+  |  |  **|**  | //Expr3// //AddOp// //Expr4// 
+  |  |  **|**  | //Expr4// 
+  | //Expr6// | -> | ``!`` //Expr7// 
   |  |  **|**  | //Expr7// 
   | //Expr5// | -> | //Expr5// ``:`` //Expr6// 
   |  |  **|**  | //Expr6// 
   | //Expr4// | -> | //Expr4// //MulOp// //Expr5// 
   |  |  **|**  | //Expr5// 
-  | //Expr3// | -> | //Expr3// //AddOp// //Expr4// 
-  |  |  **|**  | //Expr4// 
   | //Expr2// | -> | //Expr2// //RelOp// //Expr3// 
   |  |  **|**  | //Expr3// 
   | //Expr1// | -> | //Expr2// ``&&`` //Expr1// 
@@ -77,7 +76,7 @@ All other symbols are terminals.
   | //Expr// | -> | //Expr1// ``||`` //Expr// 
   |  |  **|**  | ``\`` //Bind// ``->`` //Expr// 
   |  |  **|**  | ``let`` //[Decl]// ``in`` //Expr// 
-  |  |  **|**  | ``case`` //Expr2// ``of`` ``{`` //[Alt]// ``}`` 
+  |  |  **|**  | ``case`` //Expr2// ``of`` ``{`` //[EAlt]// ``}`` 
   |  |  **|**  | ``if`` //Expr// ``then`` //Expr// ``else`` //Expr// 
   |  |  **|**  | //Expr1// 
   | //[Expr]// | -> | **eps**
@@ -109,33 +108,31 @@ All other symbols are terminals.
   |  |  **|**  | //Decl// 
   |  |  **|**  | //Decl// ``;`` //[Decl]// 
   | //Ty2// | -> | //Ident// 
-  |  |  **|**  | //Ty3// 
-  | //Ty1// | -> | ``List`` //Ty// 
-  |  |  **|**  | //Ty2// //Ty1// 
+  |  |  **|**  | ``(`` //Ty// ``)`` 
+  | //Ty1// | -> | //Ty2// //Ty1// 
   |  |  **|**  | ``Bool`` 
   |  |  **|**  | ``Int`` 
   |  |  **|**  | //Ty2// 
   | //Ty// | -> | //Ty1// ``->`` //Ty// 
   |  |  **|**  | //Ty1// 
-  | //Ty3// | -> | ``(`` //Ty// ``)`` 
   | //Bind// | -> | ``(`` //[BindElem]// ``)`` 
   | //BindElem// | -> | //Ident// ``::`` //Ty// 
   | //[BindElem]// | -> | //BindElem// 
   |  |  **|**  | //BindElem// ``,`` //[BindElem]// 
-  | //Alt// | -> | //TopPattern// ``->`` //Expr// 
-  | //TopPattern// | -> | //Ident// ``@`` //Pattern// 
-  |  |  **|**  | //Pattern// 
-  | //Pattern// | -> | //Ident// //[PatConstrArg]// 
+  | //EAlt// | -> | //ETopPattern// ``->`` //Expr// 
+  | //ETopPattern// | -> | //Ident// ``@`` //EPattern// 
+  |  |  **|**  | //EPattern// 
+  | //EPattern// | -> | //Ident// //[EPatConstrArg]// 
   |  |  **|**  | //Bind// 
   |  |  **|**  | //Lit// 
   |  |  **|**  | //Ident// 
   |  |  **|**  | ``_`` 
-  |  |  **|**  | //Ident// ``:`` //Pattern// 
-  |  |  **|**  | //Lit// ``:`` //Pattern// 
-  | //PatConstrArg// | -> | //Ident// 
-  | //[PatConstrArg]// | -> | //PatConstrArg// 
-  |  |  **|**  | //PatConstrArg// //[PatConstrArg]// 
-  | //[Alt]// | -> | //Alt// 
-  |  |  **|**  | //Alt// ``;`` //[Alt]// 
+  |  |  **|**  | //Ident// ``:`` //EPattern// 
+  |  |  **|**  | //Lit// ``:`` //EPattern// 
+  | //EPatConstrArg// | -> | //Ident// 
+  | //[EPatConstrArg]// | -> | //EPatConstrArg// 
+  |  |  **|**  | //EPatConstrArg// //[EPatConstrArg]// 
+  | //[EAlt]// | -> | //EAlt// 
+  |  |  **|**  | //EAlt// ``;`` //[EAlt]// 
 
 

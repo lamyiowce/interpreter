@@ -12,6 +12,11 @@ someList :: List Int = [1,2+3,3*19,4];
 listOfFunctions :: List Int -> Int = [\(r :: Int) -> 3*r, \(r :: Int) -> r+r];
 
 // Cases example.
+dziesiec :: Bool = case 10 of {
+	10 -> true;
+	_ -> false
+};
+
 cases :: Int = case x of { 
 	(y :: Bool) -> 23; 
 	12:[23] -> 11;

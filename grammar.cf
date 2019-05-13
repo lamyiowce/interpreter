@@ -26,7 +26,7 @@ EAnd.      Expr1 ::= Expr2 "&&" Expr1 ;
 EOr.       Expr  ::= Expr1 "||" Expr ;
 Lambda.    Expr  ::= "\\" Bind "->" Expr;
 Let.       Expr  ::= "let" [Decl] "in" Expr ;
-Case.      Expr  ::= "case" Expr2 "of" "{" [Alt] "}"; 
+Case.      Expr  ::= "case" Expr2 "of" "{" [EAlt] "}"; 
 If.        Expr  ::= "if" Expr "then" Expr "else" Expr;
 
 coercions  Expr 8 ;
@@ -66,7 +66,7 @@ separator Decl ";" ;
 -- Types --------------------------------------------------
 
 TVar.     Ty2  ::= Ident ;
-TList.    Ty1  ::= "List" Ty ;
+TList.    Ty1  ::= "List" Ty1 ;
 TApp.     Ty1  ::= Ty2 Ty1 ;
 TBool.    Ty1  ::= "Bool" ;
 TInt.     Ty1  ::= "Int" ;
@@ -88,20 +88,20 @@ separator nonempty BindElem "," ;
 
 -- alternatives and pattern matching ----------------------
 
-AltCase.  Alt ::= TopPattern "->" Expr; 
+EAltCase.  EAlt ::= ETopPattern "->" Expr; 
 
-TopPatternAt.   TopPattern ::= Ident "@" Pattern ;
-TopPatternNo.   TopPattern ::= Pattern ;
-PatData.           Pattern ::= Ident [PatConstrArg] ;
-PatBind.           Pattern ::= Bind ;
-PatLit.            Pattern ::= Lit ;
-PatIdent.          Pattern ::= Ident ;
-PatDefault.        Pattern ::= "_" ;
-PatHeadIdent.      Pattern ::= Ident ":" Pattern ;
-PatHeadLit.        Pattern ::= Lit ":" Pattern ;
+ETopPatternAt.   ETopPattern ::= Ident "@" EPattern ;
+ETopPatternNo.   ETopPattern ::= EPattern ;
+EPatData.           EPattern ::= Ident [EPatConstrArg] ;
+-- EPatBind.           EPattern ::= Bind ;
+EPatLit.            EPattern ::= Lit ;
+EPatIdent.          EPattern ::= Ident ;
+EPatDefault.        EPattern ::= "_" ;
+EPatHeadIdent.      EPattern ::= Ident ":" EPattern ;
+EPatHeadLit.        EPattern ::= Lit ":" EPattern ;
 
-PatConstrArgDef.PatConstrArg ::= Ident ;
-separator nonempty PatConstrArg "" ;
+EPatConstrArgDef.EPatConstrArg ::= Ident ;
+separator nonempty EPatConstrArg "" ;
 
 
-separator nonempty Alt ";" ;
+separator nonempty EAlt ";" ;

@@ -28,7 +28,7 @@ data Expr
     | EOr Expr Expr
     | Lambda Bind Expr
     | Let [Decl] Expr
-    | Case Expr [Alt]
+    | Case Expr [EAlt]
     | If Expr Expr Expr
   deriving (Eq, Ord, Show, Read)
 
@@ -66,22 +66,23 @@ data Bind = BindMulti [BindElem]
 data BindElem = BindElemT Ident Ty
   deriving (Eq, Ord, Show, Read)
 
-data Alt = AltCase TopPattern Expr
+data EAlt = EAltCase ETopPattern Expr
   deriving (Eq, Ord, Show, Read)
 
-data TopPattern = TopPatternAt Ident Pattern | TopPatternNo Pattern
+data ETopPattern
+    = ETopPatternAt Ident EPattern | ETopPatternNo EPattern
   deriving (Eq, Ord, Show, Read)
 
-data Pattern
-    = PatData Ident [PatConstrArg]
-    | PatBind Bind
-    | PatLit Lit
-    | PatIdent Ident
-    | PatDefault
-    | PatHeadIdent Ident Pattern
-    | PatHeadLit Lit Pattern
+data EPattern
+    = EPatData Ident [EPatConstrArg]
+    | EPatBind Bind
+    | EPatLit Lit
+    | EPatIdent Ident
+    | EPatDefault
+    | EPatHeadIdent Ident EPattern
+    | EPatHeadLit Lit EPattern
   deriving (Eq, Ord, Show, Read)
 
-data PatConstrArg = PatConstrArgDef Ident
+data EPatConstrArg = EPatConstrArgDef Ident
   deriving (Eq, Ord, Show, Read)
 

@@ -36,7 +36,7 @@ transExpr x = case x of
   EOr expr1 expr2 -> failure x
   Lambda bind expr -> failure x
   Let decls expr -> failure x
-  Case expr alts -> failure x
+  Case expr ealts -> failure x
   If expr1 expr2 expr3 -> failure x
 transAddOp :: AddOp -> Result
 transAddOp x = case x of
@@ -82,23 +82,23 @@ transBind x = case x of
 transBindElem :: BindElem -> Result
 transBindElem x = case x of
   BindElemT ident ty -> failure x
-transAlt :: Alt -> Result
-transAlt x = case x of
-  AltCase toppattern expr -> failure x
-transTopPattern :: TopPattern -> Result
-transTopPattern x = case x of
-  TopPatternAt ident pattern -> failure x
-  TopPatternNo pattern -> failure x
-transPattern :: Pattern -> Result
-transPattern x = case x of
-  PatData ident patconstrargs -> failure x
-  PatBind bind -> failure x
-  PatLit lit -> failure x
-  PatIdent ident -> failure x
-  PatDefault -> failure x
-  PatHeadIdent ident pattern -> failure x
-  PatHeadLit lit pattern -> failure x
-transPatConstrArg :: PatConstrArg -> Result
-transPatConstrArg x = case x of
-  PatConstrArgDef ident -> failure x
+transEAlt :: EAlt -> Result
+transEAlt x = case x of
+  EAltCase etoppattern expr -> failure x
+transETopPattern :: ETopPattern -> Result
+transETopPattern x = case x of
+  ETopPatternAt ident epattern -> failure x
+  ETopPatternNo epattern -> failure x
+transEPattern :: EPattern -> Result
+transEPattern x = case x of
+  EPatData ident epatconstrargs -> failure x
+  EPatBind bind -> failure x
+  EPatLit lit -> failure x
+  EPatIdent ident -> failure x
+  EPatDefault -> failure x
+  EPatHeadIdent ident epattern -> failure x
+  EPatHeadLit lit epattern -> failure x
+transEPatConstrArg :: EPatConstrArg -> Result
+transEPatConstrArg x = case x of
+  EPatConstrArgDef ident -> failure x
 

@@ -77,7 +77,7 @@ All other symbols are terminals.
   | //Expr// | -> | //Expr1// ``||`` //Expr// 
   |  |  **|**  | ``\`` //Bind// ``->`` //Expr// 
   |  |  **|**  | ``let`` //[Decl]// ``in`` //Expr// 
-  |  |  **|**  | ``case`` //Expr2// ``of`` ``{`` //[Alt]// ``}`` 
+  |  |  **|**  | ``case`` //Expr2// ``of`` ``{`` //[EAlt]// ``}`` 
   |  |  **|**  | ``if`` //Expr// ``then`` //Expr// ``else`` //Expr// 
   |  |  **|**  | //Expr1// 
   | //[Expr]// | -> | **eps**
@@ -110,7 +110,7 @@ All other symbols are terminals.
   |  |  **|**  | //Decl// ``;`` //[Decl]// 
   | //Ty2// | -> | //Ident// 
   |  |  **|**  | ``(`` //Ty// ``)`` 
-  | //Ty1// | -> | ``List`` //Ty// 
+  | //Ty1// | -> | ``List`` //Ty1// 
   |  |  **|**  | //Ty2// //Ty1// 
   |  |  **|**  | ``Bool`` 
   |  |  **|**  | ``Int`` 
@@ -121,20 +121,20 @@ All other symbols are terminals.
   | //BindElem// | -> | //Ident// ``::`` //Ty// 
   | //[BindElem]// | -> | //BindElem// 
   |  |  **|**  | //BindElem// ``,`` //[BindElem]// 
-  | //Alt// | -> | //TopPattern// ``->`` //Expr// 
-  | //TopPattern// | -> | //Ident// ``@`` //Pattern// 
-  |  |  **|**  | //Pattern// 
-  | //Pattern// | -> | //Ident// //[PatConstrArg]// 
+  | //EAlt// | -> | //ETopPattern// ``->`` //Expr// 
+  | //ETopPattern// | -> | //Ident// ``@`` //EPattern// 
+  |  |  **|**  | //EPattern// 
+  | //EPattern// | -> | //Ident// //[EPatConstrArg]// 
   |  |  **|**  | //Bind// 
   |  |  **|**  | //Lit// 
   |  |  **|**  | //Ident// 
   |  |  **|**  | ``_`` 
-  |  |  **|**  | //Ident// ``:`` //Pattern// 
-  |  |  **|**  | //Lit// ``:`` //Pattern// 
-  | //PatConstrArg// | -> | //Ident// 
-  | //[PatConstrArg]// | -> | //PatConstrArg// 
-  |  |  **|**  | //PatConstrArg// //[PatConstrArg]// 
-  | //[Alt]// | -> | //Alt// 
-  |  |  **|**  | //Alt// ``;`` //[Alt]// 
+  |  |  **|**  | //Ident// ``:`` //EPattern// 
+  |  |  **|**  | //Lit// ``:`` //EPattern// 
+  | //EPatConstrArg// | -> | //Ident// 
+  | //[EPatConstrArg]// | -> | //EPatConstrArg// 
+  |  |  **|**  | //EPatConstrArg// //[EPatConstrArg]// 
+  | //[EAlt]// | -> | //EAlt// 
+  |  |  **|**  | //EAlt// ``;`` //[EAlt]// 
 
 

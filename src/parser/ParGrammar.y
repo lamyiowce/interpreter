@@ -37,12 +37,12 @@ import ErrM
 %name pBind Bind
 %name pBindElem BindElem
 %name pListBindElem ListBindElem
-%name pAlt Alt
-%name pTopPattern TopPattern
-%name pPattern Pattern
-%name pPatConstrArg PatConstrArg
-%name pListPatConstrArg ListPatConstrArg
-%name pListAlt ListAlt
+%name pEAlt EAlt
+%name pETopPattern ETopPattern
+%name pEPattern EPattern
+%name pEPatConstrArg EPatConstrArg
+%name pListEPatConstrArg ListEPatConstrArg
+%name pListEAlt ListEAlt
 -- no lexer declaration
 %monad { Err } { thenM } { returnM }
 %tokentype {Token}
@@ -132,7 +132,7 @@ Expr :: { Expr }
 Expr : Expr1 '||' Expr { AbsGrammar.EOr $1 $3 }
      | '\\' Bind '->' Expr { AbsGrammar.Lambda $2 $4 }
      | 'let' ListDecl 'in' Expr { AbsGrammar.Let $2 $4 }
-     | 'case' Expr2 'of' '{' ListAlt '}' { AbsGrammar.Case $2 $5 }
+     | 'case' Expr2 'of' '{' ListEAlt '}' { AbsGrammar.Case $2 $5 }
      | 'if' Expr 'then' Expr 'else' Expr { AbsGrammar.If $2 $4 $6 }
      | Expr1 { $1 }
 ListExpr :: { [Expr] }
@@ -176,7 +176,7 @@ ListDecl : {- empty -} { [] }
 Ty2 :: { Ty }
 Ty2 : Ident { AbsGrammar.TVar $1 } | '(' Ty ')' { $2 }
 Ty1 :: { Ty }
-Ty1 : 'List' Ty { AbsGrammar.TList $2 }
+Ty1 : 'List' Ty1 { AbsGrammar.TList $2 }
     | Ty2 Ty1 { AbsGrammar.TApp $1 $2 }
     | 'Bool' { AbsGrammar.TBool }
     | 'Int' { AbsGrammar.TInt }
@@ -190,26 +190,26 @@ BindElem : Ident '::' Ty { AbsGrammar.BindElemT $1 $3 }
 ListBindElem :: { [BindElem] }
 ListBindElem : BindElem { (:[]) $1 }
              | BindElem ',' ListBindElem { (:) $1 $3 }
-Alt :: { Alt }
-Alt : TopPattern '->' Expr { AbsGrammar.AltCase $1 $3 }
-TopPattern :: { TopPattern }
-TopPattern : Ident '@' Pattern { AbsGrammar.TopPatternAt $1 $3 }
-           | Pattern { AbsGrammar.TopPatternNo $1 }
-Pattern :: { Pattern }
-Pattern : Ident ListPatConstrArg { AbsGrammar.PatData $1 $2 }
-        | Bind { AbsGrammar.PatBind $1 }
-        | Lit { AbsGrammar.PatLit $1 }
-        | Ident { AbsGrammar.PatIdent $1 }
-        | '_' { AbsGrammar.PatDefault }
-        | Ident ':' Pattern { AbsGrammar.PatHeadIdent $1 $3 }
-        | Lit ':' Pattern { AbsGrammar.PatHeadLit $1 $3 }
-PatConstrArg :: { PatConstrArg }
-PatConstrArg : Ident { AbsGrammar.PatConstrArgDef $1 }
-ListPatConstrArg :: { [PatConstrArg] }
-ListPatConstrArg : PatConstrArg { (:[]) $1 }
-                 | PatConstrArg ListPatConstrArg { (:) $1 $2 }
-ListAlt :: { [Alt] }
-ListAlt : Alt { (:[]) $1 } | Alt ';' ListAlt { (:) $1 $3 }
+EAlt :: { EAlt }
+EAlt : ETopPattern '->' Expr { AbsGrammar.EAltCase $1 $3 }
+ETopPattern :: { ETopPattern }
+ETopPattern : Ident '@' EPattern { AbsGrammar.ETopPatternAt $1 $3 }
+            | EPattern { AbsGrammar.ETopPatternNo $1 }
+EPattern :: { EPattern }
+EPattern : Ident ListEPatConstrArg { AbsGrammar.EPatData $1 $2 }
+         | Bind { AbsGrammar.EPatBind $1 }
+         | Lit { AbsGrammar.EPatLit $1 }
+         | Ident { AbsGrammar.EPatIdent $1 }
+         | '_' { AbsGrammar.EPatDefault }
+         | Ident ':' EPattern { AbsGrammar.EPatHeadIdent $1 $3 }
+         | Lit ':' EPattern { AbsGrammar.EPatHeadLit $1 $3 }
+EPatConstrArg :: { EPatConstrArg }
+EPatConstrArg : Ident { AbsGrammar.EPatConstrArgDef $1 }
+ListEPatConstrArg :: { [EPatConstrArg] }
+ListEPatConstrArg : EPatConstrArg { (:[]) $1 }
+                  | EPatConstrArg ListEPatConstrArg { (:) $1 $2 }
+ListEAlt :: { [EAlt] }
+ListEAlt : EAlt { (:[]) $1 } | EAlt ';' ListEAlt { (:) $1 $3 }
 {
 
 returnM :: a -> Err a
@@ -224,7 +224,7 @@ happyError ts =
   case ts of
     [] -> []
     [Err _] -> " due to lexer error"
-    _ -> " before " ++ unwords (map (id . prToken) (take 4 ts))
+    t:_ -> " before `" ++ id(prToken t) ++ "'"
 
 myLexer = tokens
 }
