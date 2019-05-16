@@ -24,16 +24,15 @@ import ErrM
 %name pMulOp MulOp
 %name pRelOp RelOp
 %name pDecl Decl
-%name pFunArgIdent FunArgIdent
-%name pListFunArgIdent ListFunArgIdent
+%name pListIdent ListIdent
 %name pConstrDef ConstrDef
 %name pConstrArg ConstrArg
 %name pListConstrArg ListConstrArg
 %name pListConstrDef ListConstrDef
 %name pListDecl ListDecl
-%name pTy2 Ty2
-%name pTy1 Ty1
-%name pTy Ty
+%name pETy2 ETy2
+%name pETy1 ETy1
+%name pETy ETy
 %name pBind Bind
 %name pBindElem BindElem
 %name pListBindElem ListBindElem
@@ -71,24 +70,25 @@ import ErrM
   'Bool' { PT _ (TS _ 22) }
   'Int' { PT _ (TS _ 23) }
   'List' { PT _ (TS _ 24) }
-  '[' { PT _ (TS _ 25) }
-  '\\' { PT _ (TS _ 26) }
-  ']' { PT _ (TS _ 27) }
-  '_' { PT _ (TS _ 28) }
-  'case' { PT _ (TS _ 29) }
-  'data' { PT _ (TS _ 30) }
-  'else' { PT _ (TS _ 31) }
-  'false' { PT _ (TS _ 32) }
-  'if' { PT _ (TS _ 33) }
-  'in' { PT _ (TS _ 34) }
-  'let' { PT _ (TS _ 35) }
-  'of' { PT _ (TS _ 36) }
-  'then' { PT _ (TS _ 37) }
-  'true' { PT _ (TS _ 38) }
-  '{' { PT _ (TS _ 39) }
-  '|' { PT _ (TS _ 40) }
-  '||' { PT _ (TS _ 41) }
-  '}' { PT _ (TS _ 42) }
+  'None' { PT _ (TS _ 25) }
+  '[' { PT _ (TS _ 26) }
+  '\\' { PT _ (TS _ 27) }
+  ']' { PT _ (TS _ 28) }
+  '_' { PT _ (TS _ 29) }
+  'case' { PT _ (TS _ 30) }
+  'data' { PT _ (TS _ 31) }
+  'else' { PT _ (TS _ 32) }
+  'false' { PT _ (TS _ 33) }
+  'if' { PT _ (TS _ 34) }
+  'in' { PT _ (TS _ 35) }
+  'let' { PT _ (TS _ 36) }
+  'of' { PT _ (TS _ 37) }
+  'then' { PT _ (TS _ 38) }
+  'true' { PT _ (TS _ 39) }
+  '{' { PT _ (TS _ 40) }
+  '|' { PT _ (TS _ 41) }
+  '||' { PT _ (TS _ 42) }
+  '}' { PT _ (TS _ 43) }
 
 L_integ  { PT _ (TI $$) }
 L_ident  { PT _ (TV $$) }
@@ -151,14 +151,11 @@ RelOp : '<' { AbsGrammar.LTH }
       | '==' { AbsGrammar.EQU }
       | '!=' { AbsGrammar.NE }
 Decl :: { Decl }
-Decl : Ident '::' Ty '=' Expr { AbsGrammar.VDecl $1 $3 $5 }
-     | Ident ListFunArgIdent '::' Ty '=' Expr { AbsGrammar.FDecl $1 $2 $4 $6 }
+Decl : Ident '::' ETy '=' Expr { AbsGrammar.VDecl $1 $3 $5 }
+     | Ident ListIdent '::' ETy '=' Expr { AbsGrammar.FDecl $1 $2 $4 $6 }
      | 'data' Ident ListConstrArg '=' ListConstrDef { AbsGrammar.DDecl $2 (reverse $3) $5 }
-FunArgIdent :: { FunArgIdent }
-FunArgIdent : Ident { AbsGrammar.FunArgIdentT $1 }
-ListFunArgIdent :: { [FunArgIdent] }
-ListFunArgIdent : FunArgIdent { (:[]) $1 }
-                | FunArgIdent ListFunArgIdent { (:) $1 $2 }
+ListIdent :: { [Ident] }
+ListIdent : Ident { (:[]) $1 } | Ident ListIdent { (:) $1 $2 }
 ConstrDef :: { ConstrDef }
 ConstrDef : Ident ListConstrArg { AbsGrammar.Constr $1 (reverse $2) }
 ConstrArg :: { ConstrArg }
@@ -173,20 +170,21 @@ ListDecl :: { [Decl] }
 ListDecl : {- empty -} { [] }
          | Decl { (:[]) $1 }
          | Decl ';' ListDecl { (:) $1 $3 }
-Ty2 :: { Ty }
-Ty2 : Ident { AbsGrammar.TVar $1 } | '(' Ty ')' { $2 }
-Ty1 :: { Ty }
-Ty1 : 'List' Ty1 { AbsGrammar.TList $2 }
-    | Ty2 Ty1 { AbsGrammar.TApp $1 $2 }
-    | 'Bool' { AbsGrammar.TBool }
-    | 'Int' { AbsGrammar.TInt }
-    | Ty2 { $1 }
-Ty :: { Ty }
-Ty : Ty1 '->' Ty { AbsGrammar.TArrow $1 $3 } | Ty1 { $1 }
+ETy2 :: { ETy }
+ETy2 : Ident { AbsGrammar.ETVar $1 } | '(' ETy ')' { $2 }
+ETy1 :: { ETy }
+ETy1 : 'List' ETy1 { AbsGrammar.ETList $2 }
+     | ETy2 ETy1 { AbsGrammar.ETApp $1 $2 }
+     | 'Bool' { AbsGrammar.ETBool }
+     | 'Int' { AbsGrammar.ETInt }
+     | 'None' { AbsGrammar.ETNone }
+     | ETy2 { $1 }
+ETy :: { ETy }
+ETy : ETy1 '->' ETy { AbsGrammar.ETArrow $1 $3 } | ETy1 { $1 }
 Bind :: { Bind }
 Bind : '(' ListBindElem ')' { AbsGrammar.BindMulti $2 }
 BindElem :: { BindElem }
-BindElem : Ident '::' Ty { AbsGrammar.BindElemT $1 $3 }
+BindElem : Ident '::' ETy { AbsGrammar.BindElemT $1 $3 }
 ListBindElem :: { [BindElem] }
 ListBindElem : BindElem { (:[]) $1 }
              | BindElem ',' ListBindElem { (:) $1 $3 }
@@ -197,7 +195,6 @@ ETopPattern : Ident '@' EPattern { AbsGrammar.ETopPatternAt $1 $3 }
             | EPattern { AbsGrammar.ETopPatternNo $1 }
 EPattern :: { EPattern }
 EPattern : Ident ListEPatConstrArg { AbsGrammar.EPatData $1 $2 }
-         | Bind { AbsGrammar.EPatBind $1 }
          | Lit { AbsGrammar.EPatLit $1 }
          | Ident { AbsGrammar.EPatIdent $1 }
          | '_' { AbsGrammar.EPatDefault }

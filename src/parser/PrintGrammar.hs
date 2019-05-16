@@ -86,6 +86,8 @@ instance Print Double where
 
 instance Print Ident where
   prt _ (Ident i) = doc (showString i)
+  prtList _ [x] = concatD [prt 0 x]
+  prtList _ (x:xs) = concatD [prt 0 x, prt 0 xs]
 
 instance Print Prog where
   prt i e = case e of
@@ -143,20 +145,14 @@ instance Print RelOp where
 
 instance Print Decl where
   prt i e = case e of
-    VDecl id ty expr -> prPrec i 0 (concatD [prt 0 id, doc (showString "::"), prt 0 ty, doc (showString "="), prt 0 expr])
-    FDecl id funargidents ty expr -> prPrec i 0 (concatD [prt 0 id, prt 0 funargidents, doc (showString "::"), prt 0 ty, doc (showString "="), prt 0 expr])
+    VDecl id ety expr -> prPrec i 0 (concatD [prt 0 id, doc (showString "::"), prt 0 ety, doc (showString "="), prt 0 expr])
+    FDecl id ids ety expr -> prPrec i 0 (concatD [prt 0 id, prt 0 ids, doc (showString "::"), prt 0 ety, doc (showString "="), prt 0 expr])
     DDecl id constrargs constrdefs -> prPrec i 0 (concatD [doc (showString "data"), prt 0 id, prt 0 constrargs, doc (showString "="), prt 0 constrdefs])
   prtList _ [] = concatD []
   prtList _ [x] = concatD [prt 0 x]
   prtList _ (x:xs) = concatD [prt 0 x, doc (showString ";"), prt 0 xs]
 
-instance Print FunArgIdent where
-  prt i e = case e of
-    FunArgIdentT id -> prPrec i 0 (concatD [prt 0 id])
-  prtList _ [x] = concatD [prt 0 x]
-  prtList _ (x:xs) = concatD [prt 0 x, prt 0 xs]
-
-instance Print [FunArgIdent] where
+instance Print [Ident] where
   prt = prtList
 
 instance Print ConstrDef where
@@ -180,14 +176,15 @@ instance Print [ConstrDef] where
 instance Print [Decl] where
   prt = prtList
 
-instance Print Ty where
+instance Print ETy where
   prt i e = case e of
-    TVar id -> prPrec i 2 (concatD [prt 0 id])
-    TList ty -> prPrec i 1 (concatD [doc (showString "List"), prt 1 ty])
-    TApp ty1 ty2 -> prPrec i 1 (concatD [prt 2 ty1, prt 1 ty2])
-    TBool -> prPrec i 1 (concatD [doc (showString "Bool")])
-    TInt -> prPrec i 1 (concatD [doc (showString "Int")])
-    TArrow ty1 ty2 -> prPrec i 0 (concatD [prt 1 ty1, doc (showString "->"), prt 0 ty2])
+    ETVar id -> prPrec i 2 (concatD [prt 0 id])
+    ETList ety -> prPrec i 1 (concatD [doc (showString "List"), prt 1 ety])
+    ETApp ety1 ety2 -> prPrec i 1 (concatD [prt 2 ety1, prt 1 ety2])
+    ETBool -> prPrec i 1 (concatD [doc (showString "Bool")])
+    ETInt -> prPrec i 1 (concatD [doc (showString "Int")])
+    ETNone -> prPrec i 1 (concatD [doc (showString "None")])
+    ETArrow ety1 ety2 -> prPrec i 0 (concatD [prt 1 ety1, doc (showString "->"), prt 0 ety2])
 
 instance Print Bind where
   prt i e = case e of
@@ -195,7 +192,7 @@ instance Print Bind where
 
 instance Print BindElem where
   prt i e = case e of
-    BindElemT id ty -> prPrec i 0 (concatD [prt 0 id, doc (showString "::"), prt 0 ty])
+    BindElemT id ety -> prPrec i 0 (concatD [prt 0 id, doc (showString "::"), prt 0 ety])
   prtList _ [x] = concatD [prt 0 x]
   prtList _ (x:xs) = concatD [prt 0 x, doc (showString ","), prt 0 xs]
 
@@ -216,7 +213,6 @@ instance Print ETopPattern where
 instance Print EPattern where
   prt i e = case e of
     EPatData id epatconstrargs -> prPrec i 0 (concatD [prt 0 id, prt 0 epatconstrargs])
-    EPatBind bind -> prPrec i 0 (concatD [prt 0 bind])
     EPatLit lit -> prPrec i 0 (concatD [prt 0 lit])
     EPatIdent id -> prPrec i 0 (concatD [prt 0 id])
     EPatDefault -> prPrec i 0 (concatD [doc (showString "_")])

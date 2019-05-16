@@ -48,11 +48,9 @@ NE.        RelOp ::= "!=" ;
 -- Declarations ------------------------------------------
 
 -- Variable and functions --------------------------------
-VDecl.  Decl ::= Ident "::" Ty "=" Expr ;
-FDecl.  Decl ::= Ident [FunArgIdent] "::" Ty "=" Expr ;
-FunArgIdentT. FunArgIdent ::= Ident ;
-separator nonempty FunArgIdent "" ; 
-
+VDecl.  Decl ::= Ident "::" ETy "=" Expr ;
+FDecl.  Decl ::= Ident [Ident] "::" ETy "=" Expr ;
+separator nonempty Ident "" ;
 -- Algebraic data types ----------------------------------
 DDecl.            Decl ::= "data" Ident [ConstrArg] "=" [ConstrDef] ;
 Constr.      ConstrDef ::= Ident [ConstrArg] ;
@@ -65,14 +63,14 @@ separator Decl ";" ;
 
 -- Types --------------------------------------------------
 
-TVar.     Ty2  ::= Ident ;
-TList.    Ty1  ::= "List" Ty1 ;
-TApp.     Ty1  ::= Ty2 Ty1 ;
-TBool.    Ty1  ::= "Bool" ;
-TInt.     Ty1  ::= "Int" ;
-TArrow.   Ty   ::= Ty1 "->" Ty ;
+ETVar.     ETy2  ::= Ident ;
+ETList.    ETy1  ::= "List" ETy1 ;
+ETApp.     ETy1  ::= ETy2 ETy1 ;
+ETBool.    ETy1  ::= "Bool" ;
+ETInt.     ETy1  ::= "Int" ;
+ETArrow.   ETy   ::= ETy1 "->" ETy ;
 
-coercions Ty 2 ;
+coercions ETy 2 ;
 
 -- Comments -----------------------------------------------
 
@@ -82,7 +80,7 @@ comment "/*" "*/" ;
 -- Binding ------------------------------------------------
 
 BindMulti.      Bind ::= "(" [BindElem] ")";
-BindElemT.  BindElem ::= Ident "::" Ty;
+BindElemT.  BindElem ::= Ident "::" ETy;
 
 separator nonempty BindElem "," ;
 

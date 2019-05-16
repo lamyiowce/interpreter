@@ -14,6 +14,7 @@ import PrintGrammar
 import AbsGrammar
 
 import ErrM
+import Interpreter
 
 type ParseFun a = [Token] -> Err a
 

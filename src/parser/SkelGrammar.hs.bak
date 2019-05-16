@@ -57,11 +57,8 @@ transRelOp x = case x of
 transDecl :: Decl -> Result
 transDecl x = case x of
   VDecl ident ty expr -> failure x
-  FDecl ident funargidents ty expr -> failure x
+  FDecl ident idents ty expr -> failure x
   DDecl ident constrargs constrdefs -> failure x
-transFunArgIdent :: FunArgIdent -> Result
-transFunArgIdent x = case x of
-  FunArgIdentT ident -> failure x
 transConstrDef :: ConstrDef -> Result
 transConstrDef x = case x of
   Constr ident constrargs -> failure x
@@ -71,9 +68,11 @@ transConstrArg x = case x of
 transTy :: Ty -> Result
 transTy x = case x of
   TVar ident -> failure x
+  TList ty -> failure x
   TApp ty1 ty2 -> failure x
   TBool -> failure x
   TInt -> failure x
+  TNone -> failure x
   TArrow ty1 ty2 -> failure x
 transBind :: Bind -> Result
 transBind x = case x of
@@ -91,7 +90,6 @@ transETopPattern x = case x of
 transEPattern :: EPattern -> Result
 transEPattern x = case x of
   EPatData ident epatconstrargs -> failure x
-  EPatBind bind -> failure x
   EPatLit lit -> failure x
   EPatIdent ident -> failure x
   EPatDefault -> failure x

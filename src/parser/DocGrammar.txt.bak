@@ -27,9 +27,10 @@ Integer literals //Integer// are nonempty sequences of digits.
 The set of reserved words is the set of terminals appearing in the grammar. Those reserved words that consist of non-letter characters are called symbols, and they are treated in a different way from those that are similar to identifiers. The lexer follows rules familiar from languages like Haskell, C, and Java, including longest match and spacing conventions.
 
 The reserved words used in grammar are the following:
-  | ``Bool`` | ``Int`` | ``case`` | ``data``
-  | ``else`` | ``false`` | ``if`` | ``in``
-  | ``let`` | ``of`` | ``then`` | ``true``
+  | ``Bool`` | ``Int`` | ``List`` | ``None``
+  | ``case`` | ``data`` | ``else`` | ``false``
+  | ``if`` | ``in`` | ``let`` | ``of``
+  | ``then`` | ``true`` |  | 
 
 The symbols used in grammar are the following:
   | [ | ] | - | !
@@ -93,11 +94,10 @@ All other symbols are terminals.
   |  |  **|**  | ``==`` 
   |  |  **|**  | ``!=`` 
   | //Decl// | -> | //Ident// ``::`` //Ty// ``=`` //Expr// 
-  |  |  **|**  | //Ident// //[FunArgIdent]// ``::`` //Ty// ``=`` //Expr// 
+  |  |  **|**  | //Ident// //[Ident]// ``::`` //Ty// ``=`` //Expr// 
   |  |  **|**  | ``data`` //Ident// //[ConstrArg]// ``=`` //[ConstrDef]// 
-  | //FunArgIdent// | -> | //Ident// 
-  | //[FunArgIdent]// | -> | //FunArgIdent// 
-  |  |  **|**  | //FunArgIdent// //[FunArgIdent]// 
+  | //[Ident]// | -> | //Ident// 
+  |  |  **|**  | //Ident// //[Ident]// 
   | //ConstrDef// | -> | //Ident// //[ConstrArg]// 
   | //ConstrArg// | -> | //Ident// 
   | //[ConstrArg]// | -> | **eps**
@@ -109,9 +109,11 @@ All other symbols are terminals.
   |  |  **|**  | //Decl// ``;`` //[Decl]// 
   | //Ty2// | -> | //Ident// 
   |  |  **|**  | ``(`` //Ty// ``)`` 
-  | //Ty1// | -> | //Ty2// //Ty1// 
+  | //Ty1// | -> | ``List`` //Ty1// 
+  |  |  **|**  | //Ty2// //Ty1// 
   |  |  **|**  | ``Bool`` 
   |  |  **|**  | ``Int`` 
+  |  |  **|**  | ``None`` 
   |  |  **|**  | //Ty2// 
   | //Ty// | -> | //Ty1// ``->`` //Ty// 
   |  |  **|**  | //Ty1// 
@@ -123,7 +125,6 @@ All other symbols are terminals.
   | //ETopPattern// | -> | //Ident// ``@`` //EPattern// 
   |  |  **|**  | //EPattern// 
   | //EPattern// | -> | //Ident// //[EPatConstrArg]// 
-  |  |  **|**  | //Bind// 
   |  |  **|**  | //Lit// 
   |  |  **|**  | //Ident// 
   |  |  **|**  | ``_`` 

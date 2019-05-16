@@ -27,10 +27,10 @@ Integer literals //Integer// are nonempty sequences of digits.
 The set of reserved words is the set of terminals appearing in the grammar. Those reserved words that consist of non-letter characters are called symbols, and they are treated in a different way from those that are similar to identifiers. The lexer follows rules familiar from languages like Haskell, C, and Java, including longest match and spacing conventions.
 
 The reserved words used in grammar are the following:
-  | ``Bool`` | ``Int`` | ``List`` | ``case``
-  | ``data`` | ``else`` | ``false`` | ``if``
-  | ``in`` | ``let`` | ``of`` | ``then``
-  | ``true`` |  |  | 
+  | ``Bool`` | ``Int`` | ``List`` | ``None``
+  | ``case`` | ``data`` | ``else`` | ``false``
+  | ``if`` | ``in`` | ``let`` | ``of``
+  | ``then`` | ``true`` |  | 
 
 The symbols used in grammar are the following:
   | [ | ] | - | !
@@ -93,12 +93,11 @@ All other symbols are terminals.
   |  |  **|**  | ``>=`` 
   |  |  **|**  | ``==`` 
   |  |  **|**  | ``!=`` 
-  | //Decl// | -> | //Ident// ``::`` //Ty// ``=`` //Expr// 
-  |  |  **|**  | //Ident// //[FunArgIdent]// ``::`` //Ty// ``=`` //Expr// 
+  | //Decl// | -> | //Ident// ``::`` //ETy// ``=`` //Expr// 
+  |  |  **|**  | //Ident// //[Ident]// ``::`` //ETy// ``=`` //Expr// 
   |  |  **|**  | ``data`` //Ident// //[ConstrArg]// ``=`` //[ConstrDef]// 
-  | //FunArgIdent// | -> | //Ident// 
-  | //[FunArgIdent]// | -> | //FunArgIdent// 
-  |  |  **|**  | //FunArgIdent// //[FunArgIdent]// 
+  | //[Ident]// | -> | //Ident// 
+  |  |  **|**  | //Ident// //[Ident]// 
   | //ConstrDef// | -> | //Ident// //[ConstrArg]// 
   | //ConstrArg// | -> | //Ident// 
   | //[ConstrArg]// | -> | **eps**
@@ -108,24 +107,24 @@ All other symbols are terminals.
   | //[Decl]// | -> | **eps**
   |  |  **|**  | //Decl// 
   |  |  **|**  | //Decl// ``;`` //[Decl]// 
-  | //Ty2// | -> | //Ident// 
-  |  |  **|**  | ``(`` //Ty// ``)`` 
-  | //Ty1// | -> | ``List`` //Ty1// 
-  |  |  **|**  | //Ty2// //Ty1// 
+  | //ETy2// | -> | //Ident// 
+  |  |  **|**  | ``(`` //ETy// ``)`` 
+  | //ETy1// | -> | ``List`` //ETy1// 
+  |  |  **|**  | //ETy2// //ETy1// 
   |  |  **|**  | ``Bool`` 
   |  |  **|**  | ``Int`` 
-  |  |  **|**  | //Ty2// 
-  | //Ty// | -> | //Ty1// ``->`` //Ty// 
-  |  |  **|**  | //Ty1// 
+  |  |  **|**  | ``None`` 
+  |  |  **|**  | //ETy2// 
+  | //ETy// | -> | //ETy1// ``->`` //ETy// 
+  |  |  **|**  | //ETy1// 
   | //Bind// | -> | ``(`` //[BindElem]// ``)`` 
-  | //BindElem// | -> | //Ident// ``::`` //Ty// 
+  | //BindElem// | -> | //Ident// ``::`` //ETy// 
   | //[BindElem]// | -> | //BindElem// 
   |  |  **|**  | //BindElem// ``,`` //[BindElem]// 
   | //EAlt// | -> | //ETopPattern// ``->`` //Expr// 
   | //ETopPattern// | -> | //Ident// ``@`` //EPattern// 
   |  |  **|**  | //EPattern// 
   | //EPattern// | -> | //Ident// //[EPatConstrArg]// 
-  |  |  **|**  | //Bind// 
   |  |  **|**  | //Lit// 
   |  |  **|**  | //Ident// 
   |  |  **|**  | ``_`` 

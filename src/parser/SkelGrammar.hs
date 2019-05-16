@@ -56,32 +56,30 @@ transRelOp x = case x of
   NE -> failure x
 transDecl :: Decl -> Result
 transDecl x = case x of
-  VDecl ident ty expr -> failure x
-  FDecl ident funargidents ty expr -> failure x
+  VDecl ident ety expr -> failure x
+  FDecl ident idents ety expr -> failure x
   DDecl ident constrargs constrdefs -> failure x
-transFunArgIdent :: FunArgIdent -> Result
-transFunArgIdent x = case x of
-  FunArgIdentT ident -> failure x
 transConstrDef :: ConstrDef -> Result
 transConstrDef x = case x of
   Constr ident constrargs -> failure x
 transConstrArg :: ConstrArg -> Result
 transConstrArg x = case x of
   ConstrArgDef ident -> failure x
-transTy :: Ty -> Result
-transTy x = case x of
-  TVar ident -> failure x
-  TList ty -> failure x
-  TApp ty1 ty2 -> failure x
-  TBool -> failure x
-  TInt -> failure x
-  TArrow ty1 ty2 -> failure x
+transETy :: ETy -> Result
+transETy x = case x of
+  ETVar ident -> failure x
+  ETList ety -> failure x
+  ETApp ety1 ety2 -> failure x
+  ETBool -> failure x
+  ETInt -> failure x
+  ETNone -> failure x
+  ETArrow ety1 ety2 -> failure x
 transBind :: Bind -> Result
 transBind x = case x of
   BindMulti bindelems -> failure x
 transBindElem :: BindElem -> Result
 transBindElem x = case x of
-  BindElemT ident ty -> failure x
+  BindElemT ident ety -> failure x
 transEAlt :: EAlt -> Result
 transEAlt x = case x of
   EAltCase etoppattern expr -> failure x
@@ -92,7 +90,6 @@ transETopPattern x = case x of
 transEPattern :: EPattern -> Result
 transEPattern x = case x of
   EPatData ident epatconstrargs -> failure x
-  EPatBind bind -> failure x
   EPatLit lit -> failure x
   EPatIdent ident -> failure x
   EPatDefault -> failure x

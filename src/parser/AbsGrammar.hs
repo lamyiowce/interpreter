@@ -42,12 +42,9 @@ data RelOp = LTH | LE | GTH | GE | EQU | NE
   deriving (Eq, Ord, Show, Read)
 
 data Decl
-    = VDecl Ident Ty Expr
-    | FDecl Ident [FunArgIdent] Ty Expr
+    = VDecl Ident ETy Expr
+    | FDecl Ident [Ident] ETy Expr
     | DDecl Ident [ConstrArg] [ConstrDef]
-  deriving (Eq, Ord, Show, Read)
-
-data FunArgIdent = FunArgIdentT Ident
   deriving (Eq, Ord, Show, Read)
 
 data ConstrDef = Constr Ident [ConstrArg]
@@ -56,14 +53,20 @@ data ConstrDef = Constr Ident [ConstrArg]
 data ConstrArg = ConstrArgDef Ident
   deriving (Eq, Ord, Show, Read)
 
-data Ty
-    = TVar Ident | TList Ty | TApp Ty Ty | TBool | TInt | TArrow Ty Ty
+data ETy
+    = ETVar Ident
+    | ETList ETy
+    | ETApp ETy ETy
+    | ETBool
+    | ETInt
+    | ETNone
+    | ETArrow ETy ETy
   deriving (Eq, Ord, Show, Read)
 
 data Bind = BindMulti [BindElem]
   deriving (Eq, Ord, Show, Read)
 
-data BindElem = BindElemT Ident Ty
+data BindElem = BindElemT Ident ETy
   deriving (Eq, Ord, Show, Read)
 
 data EAlt = EAltCase ETopPattern Expr
@@ -75,7 +78,6 @@ data ETopPattern
 
 data EPattern
     = EPatData Ident [EPatConstrArg]
-    | EPatBind Bind
     | EPatLit Lit
     | EPatIdent Ident
     | EPatDefault

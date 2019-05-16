@@ -8,8 +8,13 @@ import Control.Monad.Reader
 import Control.Monad.State
 import Data.Map.Lazy hiding (foldl)
 import ErrM
-data Value = ValInt Integer | ValBool Bool | ValList [Value] | ValFun [Ident] LazyValue deriving (Show, Eq)
-data LazyValue = LazyVal Expr Env | AlreadyVal Value deriving (Show, Eq)
+data Value = ValInt Integer | ValBool Bool | ValList [Value] | ValLambda [Ident] LazyValue deriving (Show, Eq)
+data LazyValue = LazyVal Expr Env | AlreadyVal Value deriving (Eq)
+
+instance Show LazyValue where
+  show (LazyVal expr env) = show expr
+  show (AlreadyVal val) = show val
+
 type Loc = Integer
 type Env = Map Ident LazyValue
 
@@ -19,6 +24,9 @@ data Alternative = Alt TopPattern Expr
 
 failure :: Expr -> ReaderT Env Err Value
 failure x = fail $ "Not implemented yet: " ++ show x
+
+failureState :: Decl -> StateT Env Err ()
+failureState x = fail $ "Not implemented yet: " ++ show x
 
 transLit :: Lit -> ReaderT Env Err Value
 transLit x = case x of
@@ -109,7 +117,7 @@ addTopPatternToEnv pat val env = case pat of
   TopPat p -> addPatternToEnv p val env
   TopAtPat ident p -> insert ident (AlreadyVal val) (addPatternToEnv p val env)
 
--- Already cheched that the patterm matches the value/expr.
+-- Already checked that the patterm matches the value/expr.
 addPatternToEnv :: Pattern -> Value -> Env -> Env
 addPatternToEnv pat val env = case pat of 
   PatDefault -> env
@@ -132,13 +140,15 @@ transExpr x = case x of
     return value
   ELit lit -> transLit lit
 
-  EApp expr1 expr2 -> do
-    ValFun binds (LazyVal lazyExpr lazyEnv) <- transExpr expr1
+  EApp expr1 argExpr -> do
+    fun <- transExpr expr1 
     env <- ask
-    case binds of
-      ident:[] -> local (\_ ->  insert ident (LazyVal expr2 env) lazyEnv) (transExpr lazyExpr)
-      ident:otherBinds -> return $ ValFun otherBinds (LazyVal lazyExpr (insert ident (LazyVal expr2 env) lazyEnv))
-
+    case fun of 
+      ValLambda binds (LazyVal lazyExpr bodyEnv) -> 
+          case binds of
+              ident:[] -> local (\e -> insert ident (LazyVal argExpr e) bodyEnv) (transExpr lazyExpr)
+              ident:otherBinds -> return $ ValLambda otherBinds (LazyVal lazyExpr (insert ident (LazyVal argExpr env) bodyEnv))
+    
   ECons expr1 expr2 -> do
     v1 <- transExpr expr1
     ValList v2 <- transExpr expr2
@@ -196,7 +206,7 @@ transExpr x = case x of
 
   Lambda (BindMulti binds) expr -> do
     env <- ask
-    return $ ValFun (Prelude.map (\(BindElemT ident _) -> ident) binds) (LazyVal expr env)
+    return $ ValLambda (Prelude.map (\(BindElemT ident _) -> ident) binds) (LazyVal expr env)
 
   Let decls expr -> do
     letEnv <- ask
@@ -209,8 +219,12 @@ transDecl :: Decl -> StateT Env Err ()
 transDecl x = case x of
   VDecl ident ty expr -> do
     env <- get
-    put (insert ident (LazyVal expr env) env)
-  FDecl ident funargidents ty expr -> failureState x
+    let newEnv = insert ident (LazyVal expr newEnv) env 
+    put newEnv
+  FDecl ident args _ expr -> do
+    env <- get
+    let newEnv = insert ident (AlreadyVal $ ValLambda args (LazyVal expr newEnv)) env 
+    put newEnv 
   DDecl ident constrargs constrdefs -> failureState x
 
 transProg :: Prog -> Err Env
