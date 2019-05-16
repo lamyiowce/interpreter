@@ -1,0 +1,5 @@
+// Wrong number of arguments for function.
+
+f a b :: Int -> Int -> Int = a*a + b*b;
+
+x :: Int = f 1 2 3

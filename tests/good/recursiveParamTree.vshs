@@ -1,0 +1,2 @@
+// Recursive parametrized type
+// data Tree a = Empty | Node a Tree Tree;

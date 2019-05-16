@@ -1,0 +1,6 @@
+// Wrong type in `case` pattern matching.
+
+a :: Int = case 10 of {
+	10 -> 1;
+	11 -> false
+}

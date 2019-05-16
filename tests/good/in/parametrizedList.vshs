@@ -1,2 +1,0 @@
-// Custom parametrized list.
-data MyList a = Empty | Nonempty a MyList;

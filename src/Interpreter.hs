@@ -4,16 +4,25 @@ import Prelude hiding (lookup)
 import AbsGrammar
 import LexGrammar
 import ParGrammar
+import PrintGrammar
 import Control.Monad.Reader
 import Control.Monad.State
-import Data.Map.Lazy hiding (foldl)
+import Data.Map.Lazy hiding (foldl, map)
 import ErrM
-data Value = ValInt Integer | ValBool Bool | ValList [Value] | ValLambda [Ident] LazyValue deriving (Show, Eq)
+data Value = ValInt Integer | ValBool Bool | ValList [Value] | ValLambda [Ident] LazyValue deriving Eq
 data LazyValue = LazyVal Expr Env | AlreadyVal Value deriving (Eq)
 
+instance Show Value where
+  show (ValInt i) = show i
+  show (ValBool b) = show b
+  show (ValList l) = show l
+  show (ValLambda idents lazyVal) = show (map (\(Ident i) -> i) idents) ++ " -> " ++ (show lazyVal)
+
 instance Show LazyValue where
-  show (LazyVal expr env) = show expr
+  show (LazyVal expr env) = printTree expr
   show (AlreadyVal val) = show val
+
+
 
 type Loc = Integer
 type Env = Map Ident LazyValue
@@ -124,7 +133,7 @@ addPatternToEnv pat val env = case pat of
   PatValue _ -> env
   PatIdent ident -> insert ident (AlreadyVal val) env
   PatListHeadIdent ident pat -> case val of 
-      ValList (h:valTail) -> insert ident (AlreadyVal h) (addPatternToEnv pat val env)
+      ValList (h:valTail) -> insert ident (AlreadyVal h) (addPatternToEnv pat (ValList valTail) env)
   PatListHeadLit _ pat -> case val of 
       ValList (_:valTail) -> addPatternToEnv pat (ValList valTail) env
 
@@ -234,22 +243,5 @@ transProg (Program decls) =
 evalExpr :: Env -> Expr -> Err Value
 evalExpr s exp = runReaderT (transExpr exp) s
 
-asPrintableEnv :: Env -> Err [String]
-asPrintableEnv env = 
-  let 
-    listEnv = toList env 
-    evalLazyExpr (Ident ident, envVal) =
-      case envVal of 
-        LazyVal expr lazyEnv -> evalExpr lazyEnv expr >>= \val -> return (ident, val)
-        AlreadyVal val -> return (ident, val)
-  in
-  mapM evalLazyExpr listEnv
-    >>= \lst -> return (Prelude.map (\(ident, val) -> ident ++ " = " ++ (show val)) lst)
-
 parseExpr :: String -> Err Value
 parseExpr s = pExpr (myLexer s) >>= evalExpr empty
-
-interpret :: String -> IO ()
-interpret s = case ((pProg $ myLexer s) >>= transProg >>= asPrintableEnv) of 
-  Ok results -> mapM_ putStrLn results
-  Bad errString -> putStrLn $ "ERROR: " ++ errString

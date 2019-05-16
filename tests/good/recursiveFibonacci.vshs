@@ -1,0 +1,4 @@
+
+fib n :: Int -> Int = if n <= 1 then 1 else fib (n-1) + fib (n-2);
+shoulBe21 :: Int = fib 7;
+shouldTakeLong :: Int = fib 23

@@ -1,0 +1,3 @@
+// Worst sin of them all.
+
+a :: Int = 1 / 0;

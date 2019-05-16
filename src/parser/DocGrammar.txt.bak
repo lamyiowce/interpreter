@@ -93,8 +93,8 @@ All other symbols are terminals.
   |  |  **|**  | ``>=`` 
   |  |  **|**  | ``==`` 
   |  |  **|**  | ``!=`` 
-  | //Decl// | -> | //Ident// ``::`` //Ty// ``=`` //Expr// 
-  |  |  **|**  | //Ident// //[Ident]// ``::`` //Ty// ``=`` //Expr// 
+  | //Decl// | -> | //Ident// ``::`` //ETy// ``=`` //Expr// 
+  |  |  **|**  | //Ident// //[Ident]// ``::`` //ETy// ``=`` //Expr// 
   |  |  **|**  | ``data`` //Ident// //[ConstrArg]// ``=`` //[ConstrDef]// 
   | //[Ident]// | -> | //Ident// 
   |  |  **|**  | //Ident// //[Ident]// 
@@ -107,18 +107,18 @@ All other symbols are terminals.
   | //[Decl]// | -> | **eps**
   |  |  **|**  | //Decl// 
   |  |  **|**  | //Decl// ``;`` //[Decl]// 
-  | //Ty2// | -> | //Ident// 
-  |  |  **|**  | ``(`` //Ty// ``)`` 
-  | //Ty1// | -> | ``List`` //Ty1// 
-  |  |  **|**  | //Ty2// //Ty1// 
+  | //ETy2// | -> | //Ident// 
+  |  |  **|**  | ``(`` //ETy// ``)`` 
+  | //ETy1// | -> | ``List`` //ETy1// 
+  |  |  **|**  | //ETy2// //ETy1// 
   |  |  **|**  | ``Bool`` 
   |  |  **|**  | ``Int`` 
   |  |  **|**  | ``None`` 
-  |  |  **|**  | //Ty2// 
-  | //Ty// | -> | //Ty1// ``->`` //Ty// 
-  |  |  **|**  | //Ty1// 
+  |  |  **|**  | //ETy2// 
+  | //ETy// | -> | //ETy1// ``->`` //ETy// 
+  |  |  **|**  | //ETy1// 
   | //Bind// | -> | ``(`` //[BindElem]// ``)`` 
-  | //BindElem// | -> | //Ident// ``::`` //Ty// 
+  | //BindElem// | -> | //Ident// ``::`` //ETy// 
   | //[BindElem]// | -> | //BindElem// 
   |  |  **|**  | //BindElem// ``,`` //[BindElem]// 
   | //EAlt// | -> | //ETopPattern// ``->`` //Expr// 

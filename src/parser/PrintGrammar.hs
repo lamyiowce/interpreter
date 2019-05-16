@@ -107,7 +107,7 @@ instance Print Expr where
     EApp expr1 expr2 -> prPrec i 7 (concatD [prt 7 expr1, prt 8 expr2])
     Neg expr -> prPrec i 3 (concatD [doc (showString "-"), prt 4 expr])
     Not expr -> prPrec i 6 (concatD [doc (showString "!"), prt 7 expr])
-    ECons expr1 expr2 -> prPrec i 5 (concatD [prt 5 expr1, doc (showString ":"), prt 6 expr2])
+    ECons expr1 expr2 -> prPrec i 5 (concatD [prt 6 expr1, doc (showString ":"), prt 5 expr2])
     EMul expr1 mulop expr2 -> prPrec i 4 (concatD [prt 4 expr1, prt 0 mulop, prt 5 expr2])
     EAdd expr1 addop expr2 -> prPrec i 3 (concatD [prt 3 expr1, prt 0 addop, prt 4 expr2])
     ERel expr1 relop expr2 -> prPrec i 2 (concatD [prt 2 expr1, prt 0 relop, prt 3 expr2])
@@ -183,7 +183,6 @@ instance Print ETy where
     ETApp ety1 ety2 -> prPrec i 1 (concatD [prt 2 ety1, prt 1 ety2])
     ETBool -> prPrec i 1 (concatD [doc (showString "Bool")])
     ETInt -> prPrec i 1 (concatD [doc (showString "Int")])
-    ETNone -> prPrec i 1 (concatD [doc (showString "None")])
     ETArrow ety1 ety2 -> prPrec i 0 (concatD [prt 1 ety1, doc (showString "->"), prt 0 ety2])
 
 instance Print Bind where

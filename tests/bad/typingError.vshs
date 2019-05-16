@@ -1,0 +1,3 @@
+// Static typing error.
+
+a :: Int = true;

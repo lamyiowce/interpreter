@@ -1,0 +1,2 @@
+// Incorrect because of lack of type in lambda function.
+f :: Int -> Int = \x -> x*2

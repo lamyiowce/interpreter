@@ -1,0 +1,5 @@
+// Currying.
+
+f a b :: Int -> Int -> Int = a + b
+
+addMeaning x :: Int -> Int = f 42

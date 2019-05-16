@@ -2,9 +2,11 @@
 mapInt :: List Int -> (Int -> Int) -> List Int =
 	\(lst :: List Int, fun :: Int -> Int) -> case lst of {
 		[] -> [];
-		x:xs -> (fun x):(map xs fun)
+		x:xs -> (fun x):(mapInt xs fun)
 };
 
 // Double numbers in the list.
 doubleTheList :: List Int -> List Int =
 	\(lst :: List Int) -> mapInt lst (\(x :: Int) -> x*2);
+
+result :: List Int = doubleTheList [1, 2, 3, 4]

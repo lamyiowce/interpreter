@@ -1,0 +1,28 @@
+// Arithmetics, let, function application, cons
+
+
+truthy :: Bool = true;
+falsy :: Bool = false;
+one :: Int = 1;
+minusOne :: Int = -1;
+
+shouldBe9 :: Int = 1 + (1 - 13/6) * 10;
+
+letty :: Int = let smallNumber :: Int = 3 in smallNumber * 1000;
+cons :: List Int = 1:2:3:4:[];
+
+apply f x :: (Int -> Int) -> Int -> Int = f x;
+divide x :: Int -> Int = x / 2;
+shouldBe5 :: Int = apply divide 10;
+
+lambda :: Bool -> Int -> Int = \(x :: Bool, y :: Int) -> if x then y else 0;
+
+if1 :: Int = if true && false then 71830 else let f :: Int = 12 in f + 30;
+if2 :: Int = if shouldBe5 == 5 then 42 else 71830;
+
+someList :: List Int = [1,2+3,3*19,4];
+emptyList :: List Int = [];
+listOfFunctions :: List (Int -> Int) = [divide];
+
+//listOfFunctions :: List (Int -> Int) = [\(r :: Int) -> 3*r, \(r :: Int) -> r+r];
+listOfLists :: List List Int = [[1],[],[]];

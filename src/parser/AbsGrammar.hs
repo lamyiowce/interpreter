@@ -59,7 +59,6 @@ data ETy
     | ETApp ETy ETy
     | ETBool
     | ETInt
-    | ETNone
     | ETArrow ETy ETy
   deriving (Eq, Ord, Show, Read)
 

@@ -1,5 +1,11 @@
 // Closure
+x :: Int = -1;
+
 f x :: Int -> Int -> Int =
 	let g :: Int -> Int = \(y :: Int) -> y+x in
 		g;
+
+increase :: Int -> Int = f 1;
+
+ok :: Bool = (increase 10 == 11);
 

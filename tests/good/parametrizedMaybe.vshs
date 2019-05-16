@@ -1,0 +1,2 @@
+// Parametrized Maybe type
+// data Maybe a = Nothing | Some a;

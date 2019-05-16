@@ -1,0 +1,12 @@
+// Cases example.
+cases x :: List Int -> List Int = case x of {
+	12:[23] -> [1];
+	a:b:c:d:rest -> rest;
+	p@x:y:xs -> x:p;
+	_ -> [666]
+};
+
+shouldBe1 :: List Int = cases [12, 23];
+shouldBe1123 :: List Int = cases [1, 2, 3];
+shouldBe5 :: List Int = cases (1:2:3:4:5:[]);
+shouldBe666 :: List Int = cases [666];

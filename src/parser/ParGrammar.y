@@ -70,25 +70,24 @@ import ErrM
   'Bool' { PT _ (TS _ 22) }
   'Int' { PT _ (TS _ 23) }
   'List' { PT _ (TS _ 24) }
-  'None' { PT _ (TS _ 25) }
-  '[' { PT _ (TS _ 26) }
-  '\\' { PT _ (TS _ 27) }
-  ']' { PT _ (TS _ 28) }
-  '_' { PT _ (TS _ 29) }
-  'case' { PT _ (TS _ 30) }
-  'data' { PT _ (TS _ 31) }
-  'else' { PT _ (TS _ 32) }
-  'false' { PT _ (TS _ 33) }
-  'if' { PT _ (TS _ 34) }
-  'in' { PT _ (TS _ 35) }
-  'let' { PT _ (TS _ 36) }
-  'of' { PT _ (TS _ 37) }
-  'then' { PT _ (TS _ 38) }
-  'true' { PT _ (TS _ 39) }
-  '{' { PT _ (TS _ 40) }
-  '|' { PT _ (TS _ 41) }
-  '||' { PT _ (TS _ 42) }
-  '}' { PT _ (TS _ 43) }
+  '[' { PT _ (TS _ 25) }
+  '\\' { PT _ (TS _ 26) }
+  ']' { PT _ (TS _ 27) }
+  '_' { PT _ (TS _ 28) }
+  'case' { PT _ (TS _ 29) }
+  'data' { PT _ (TS _ 30) }
+  'else' { PT _ (TS _ 31) }
+  'false' { PT _ (TS _ 32) }
+  'if' { PT _ (TS _ 33) }
+  'in' { PT _ (TS _ 34) }
+  'let' { PT _ (TS _ 35) }
+  'of' { PT _ (TS _ 36) }
+  'then' { PT _ (TS _ 37) }
+  'true' { PT _ (TS _ 38) }
+  '{' { PT _ (TS _ 39) }
+  '|' { PT _ (TS _ 40) }
+  '||' { PT _ (TS _ 41) }
+  '}' { PT _ (TS _ 42) }
 
 L_integ  { PT _ (TI $$) }
 L_ident  { PT _ (TV $$) }
@@ -119,7 +118,7 @@ Expr3 : '-' Expr4 { AbsGrammar.Neg $2 }
 Expr6 :: { Expr }
 Expr6 : '!' Expr7 { AbsGrammar.Not $2 } | Expr7 { $1 }
 Expr5 :: { Expr }
-Expr5 : Expr5 ':' Expr6 { AbsGrammar.ECons $1 $3 } | Expr6 { $1 }
+Expr5 : Expr6 ':' Expr5 { AbsGrammar.ECons $1 $3 } | Expr6 { $1 }
 Expr4 :: { Expr }
 Expr4 : Expr4 MulOp Expr5 { AbsGrammar.EMul $1 $2 $3 }
       | Expr5 { $1 }
@@ -177,7 +176,6 @@ ETy1 : 'List' ETy1 { AbsGrammar.ETList $2 }
      | ETy2 ETy1 { AbsGrammar.ETApp $1 $2 }
      | 'Bool' { AbsGrammar.ETBool }
      | 'Int' { AbsGrammar.ETInt }
-     | 'None' { AbsGrammar.ETNone }
      | ETy2 { $1 }
 ETy :: { ETy }
 ETy : ETy1 '->' ETy { AbsGrammar.ETArrow $1 $3 } | ETy1 { $1 }

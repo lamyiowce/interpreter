@@ -72,7 +72,6 @@ transETy x = case x of
   ETApp ety1 ety2 -> failure x
   ETBool -> failure x
   ETInt -> failure x
-  ETNone -> failure x
   ETArrow ety1 ety2 -> failure x
 transBind :: Bind -> Result
 transBind x = case x of

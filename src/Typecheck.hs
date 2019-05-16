@@ -96,7 +96,7 @@ inferEPattern x caseExprTy = case x of
     return (litTy, env)
   EPatIdent ident -> do
     env <- ask
-    return (TNone, insert ident (AlreadyT caseExprTy) env)
+    return (caseExprTy, insert ident (AlreadyT caseExprTy) env)
   EPatDefault -> do 
     env <- ask
     return (TNone, env)
@@ -212,18 +212,44 @@ inferExpr x = case x of
 typeDecl :: Decl -> StateT TypeEnv Err ()
 typeDecl x = case x of
   VDecl ident@(Ident i) ety expr -> do 
-      let ty = transETy ety
-      env <- get
-      let newEnv = insert ident (LazyT expr newEnv) env
-      put newEnv
-      t <- case (runReaderT (inferExpr expr) newEnv) of 
+        let ty = transETy ety
+        env <- get
+        let newEnv = insert ident (AlreadyT ty) env
+        put newEnv
+        t <- case (runReaderT (inferExpr expr) newEnv) of 
             Ok t -> return t
             Bad err -> fail err  
-      if ty == t then
-          put $ insert ident (AlreadyT ty) env 
-      else 
-          fail $ "Typing error for variable " ++ i ++ ": expected " ++ (show ty) ++ ", got " ++ (show t)
-  FDecl ident idents ty expr -> failureState x
+        if ty == t then
+            return () 
+        else 
+            fail $ "Typing error for variable " ++ i ++ ": expected " ++ (show ty) ++ ", got " ++ (show t)
+  FDecl ident@(Ident i) args ety expr -> do 
+        let ty = transETy ety
+        env <- get
+        put (insert ident (AlreadyT ty) env)
+        env <- get
+        (env, ty) <- 
+            foldM (\(newEnv, newTy) -> \arg -> 
+                case newTy of 
+                        argTy :-> otherTy -> return (insert arg (AlreadyT argTy) newEnv, otherTy)
+                        _ -> fail $ "Expected function type, got " ++ (show newTy)
+            ) (env, ty) args
+        put env
+        exprTy <- case (runReaderT (inferExpr expr) env) of 
+            Ok t -> return t
+            Bad err -> fail err 
+        if ty == exprTy then
+            return ()
+        else 
+            fail $ errMsgIn ty exprTy ("function " ++ i)
+
+      -- t <- case (runReaderT (inferExpr expr) newEnv) of 
+      --       Ok t -> return t
+      --       Bad err -> fail err  
+      -- if ty == t then
+      --     put $ insert ident (AlreadyT ty) env 
+      -- else 
+      --     fail $ "Typing error for variable " ++ i ++ ": expected " ++ (show ty) ++ ", got " ++ (show t)
   DDecl ident constrargs constrdefs -> failureState x
 
 typeProg :: Prog -> Err TypeEnv
@@ -235,14 +261,14 @@ asPrintableTypeEnv env =
   let 
     listEnv = toList env 
     evalLazyExpr (Ident ident, envTy) =
-      case envTy of 
-        LazyT expr lazyEnv -> runReaderT (inferExpr expr) lazyEnv >>= \ty -> return (ident, ty)
-        AlreadyT ty -> return (ident, ty)
+        case envTy of 
+            LazyT expr lazyEnv -> runReaderT (inferExpr expr) lazyEnv >>= \ty -> return (ident, ty)
+            AlreadyT ty -> return (ident, ty)
   in
   mapM evalLazyExpr listEnv  
     >>= \lst -> return (Prelude.map (\(ident, ty) -> ident ++ " = " ++ (show ty)) lst)
 
 typecheck :: String -> IO ()
 typecheck s = case ((pProg $ myLexer s) >>= typeProg >>= asPrintableTypeEnv) of 
-  Ok results -> mapM_ putStrLn results
-  Bad errString -> putStrLn $ "ERROR DURING TYPE CHECKING: " ++ errString
+    Ok results -> mapM_ putStrLn results
+    Bad errString -> putStrLn $ "ERROR DURING TYPE CHECKING: " ++ errString

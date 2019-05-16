@@ -2,46 +2,57 @@
 -- based on automatically generated file by BNF Converter
 module Main where
 
-import System.IO ( stdin, hGetContents )
-import System.Environment ( getArgs, getProgName )
-import System.Exit ( exitFailure, exitSuccess )
+import System.IO (stdin, hGetContents)
+import System.Environment (getArgs, getProgName)
+import System.Exit (exitFailure, exitSuccess)
 import Control.Monad (when)
+import Data.Map.Lazy
 
 import LexGrammar
 import ParGrammar
-import SkelGrammar
 import PrintGrammar
 import AbsGrammar
 
 import ErrM
 import Interpreter
+import Typecheck
 
-type ParseFun a = [Token] -> Err a
+
+asPrintableEnv :: TypeEnv -> Env -> Err [String]
+asPrintableEnv tyEnv env = 
+  let 
+    listEnv = toList env 
+    evalLazyExpr (ident, envVal) =
+        case envVal of 
+            LazyVal expr lazyEnv -> evalExpr lazyEnv expr >>= \val -> return (ident, val)
+            AlreadyVal val -> return (ident, val)
+  in
+  mapM evalLazyExpr listEnv
+    >>= \lst -> return (Prelude.map (\(id@(Ident ident), val) -> ident ++ " :: " ++ (show $ tyEnv ! id) ++ " = " ++ (show val)) lst)
 
 
-showTree :: (Show a, Print a) =>  a -> IO ()
-showTree tree = do
-      putStrLn $ "\n[Abstract Syntax]\n\n" ++ show tree
-      putStrLn $ "\n[Linearized tree]\n\n" ++ printTree tree
+interpret :: String -> IO ()
+interpret s = 
+    let 
+        result = (pProg $ myLexer s) 
+            >>= (\p -> typeProg p 
+                >>= (\tyEnv -> transProg p 
+                    >>= asPrintableEnv tyEnv)) 
+    in
+    case result of 
+        Ok results -> mapM_ putStrLn results
+        Bad errString -> putStrLn $ "ERROR: " ++ errString
 
-runFile :: (Print a, Show a) => ParseFun a -> FilePath -> IO ()
-runFile p f = readFile f >>= run p
+runFile :: FilePath -> IO ()
+runFile f = readFile f >>= interpret
 
-run :: (Print a, Show a) => ParseFun a -> String -> IO ()
-run p s = let ts = myLexer s in case p ts of
-           Bad s    -> do putStrLn $ show ts
-                          exitFailure
-           Ok  tree -> do putStrLn "\nParse Successful!"
-                          showTree tree
-                          interpret tree
-                          exitSuccess
 
 main :: IO ()
 main = do
   args <- getArgs
   case args of
     [] -> putStrLn "Please provide a path to file."
-    fs -> mapM_ (runFile pProg) fs
+    fs -> mapM_ (runFile) fs
 
 
 
