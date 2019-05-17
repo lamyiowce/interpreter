@@ -1,5 +1,5 @@
 // Currying.
 
-f a b :: Int -> Int -> Int = a + b
-
-addMeaning x :: Int -> Int = f 42
+f a b :: Int -> Int -> Int = a + b;
+addMeaning :: Int -> Int = f 42;
+result :: Bool = addMeaning 0 == 42

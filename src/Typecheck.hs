@@ -31,10 +31,6 @@ instance Show LazyType where
   show (LazyT expr _) = show expr
   show (AlreadyT ty) = show ty
 
--- data Pattern = PatValue Value | PatDefault | PatIdent Ident | PatListHeadIdent Ident Pattern | PatListHeadLit Value Pattern
--- data TopPattern = TopAtPat Ident Pattern | TopPat Pattern
--- data Alternative = Alt TopPattern Expr
-
 failure :: Show d => d -> ReaderT TypeEnv Err a
 failure x = fail $ "Not implemented yet: " ++ show x
 
@@ -243,18 +239,12 @@ typeDecl x = case x of
         else 
             fail $ errMsgIn ty exprTy ("function " ++ i)
 
-      -- t <- case (runReaderT (inferExpr expr) newEnv) of 
-      --       Ok t -> return t
-      --       Bad err -> fail err  
-      -- if ty == t then
-      --     put $ insert ident (AlreadyT ty) env 
-      -- else 
-      --     fail $ "Typing error for variable " ++ i ++ ": expected " ++ (show ty) ++ ", got " ++ (show t)
-  DDecl ident constrargs constrdefs -> failureState x
+typeProgWithEnv :: TypeEnv -> Prog -> Err TypeEnv
+typeProgWithEnv e (Program decls) =
+    foldM (\env -> \decl -> execStateT (typeDecl decl) env) e decls  
 
 typeProg :: Prog -> Err TypeEnv
-typeProg (Program decls) =
-    foldM (\env -> \decl -> execStateT (typeDecl decl) env) empty decls  
+typeProg = typeProgWithEnv empty
 
 asPrintableTypeEnv :: TypeEnv -> Err [String]
 asPrintableTypeEnv env = 

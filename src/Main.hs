@@ -51,10 +51,5 @@ main :: IO ()
 main = do
   args <- getArgs
   case args of
-    [] -> putStrLn "Please provide a path to file."
+    [] -> getContents >>= interpret
     fs -> mapM_ (runFile) fs
-
-
-
-
-

@@ -27,11 +27,6 @@ instance Show LazyValue where
 -- Environment: maps var/fun ids to lazy values - 
 type Env = Map Ident LazyValue
 
--- Types for pattern matching. ------------------
-data Pattern = PatValue Value | PatDefault | PatIdent Ident | PatListHeadIdent Ident Pattern | PatListHeadLit Value Pattern
-data TopPattern = TopAtPat Ident Pattern | TopPat Pattern
-data Alternative = Alt TopPattern Expr
-
 -- Monadically convert parsed literal to a value.
 transLit :: Lit -> ReaderT Env Err Value
 transLit x = case x of
@@ -63,105 +58,53 @@ transRelOp x = case x of
   NE -> (/=)
 
 -- Pattern matching. ----------------------------
--- Functions for translating parsed patterns to 
--- patterns with literals.
-transEAlt :: EAlt -> ReaderT Env Err Alternative
-transEAlt x = case x of
-  EAltCase etoppattern expr -> do
-    p <- transETopPattern etoppattern
-    return $ Alt p expr
-
-transETopPattern :: ETopPattern -> ReaderT Env Err TopPattern
-transETopPattern x = case x of
-  ETopPatternAt ident epattern -> do
-    p <- transEPattern epattern 
-    return $ TopAtPat ident p
-  ETopPatternNo epattern -> do 
-    p <- transEPattern epattern
-    return $ TopPat p
-
-transEPattern :: EPattern -> ReaderT Env Err Pattern
-transEPattern x = case x of
-  EPatDefault -> return PatDefault
-  EPatLit lit -> do
-    val <- transLit lit
-    return $ PatValue val 
-  EPatIdent ident -> return $ PatIdent ident
-  EPatHeadIdent ident epattern -> do
-    insidePattern <- transEPattern epattern
-    return $ PatListHeadIdent ident insidePattern
-  EPatHeadLit lit epattern -> do
-    litVal <- transLit lit 
-    insidePattern <- transEPattern epattern
-    return $ PatListHeadLit litVal insidePattern
-  -- EPatData ident epatconstrargs -> failure x
-
--- transEPatConstrArg :: EPatConstrArg -> Result
--- transEPatConstrArg x = case x of
---   EPatConstrArgDef ident -> failure x
 
 -- Check if the pattern matches the value.
-isMatchTop :: Env -> TopPattern -> Value -> Bool 
+isMatchTop :: Env -> ETopPattern -> Value -> ReaderT Env Err Bool 
 isMatchTop env pat val = 
   let 
     p = case pat of
-          TopAtPat _ p -> p
-          TopPat p -> p
+          ETopPatternAt _ p -> p
+          ETopPatternNo p -> p
   in
   isMatch env p val
 
-isMatch :: Env -> Pattern -> Value -> Bool
+isMatch :: Env -> EPattern -> Value -> ReaderT Env Err Bool
 isMatch env p val = 
   case (p, val) of 
-    (PatDefault, _) -> True
-    (PatValue patVal, val) -> patVal == val
-    (PatIdent _, _) -> True
-    (PatListHeadIdent _ pat, ValList (_:valTail)) -> isMatch env pat (ValList valTail)
-    (PatListHeadLit val pat, ValList (hd:valTail)) -> val == hd && isMatch env pat (ValList valTail)
-    (_, _) -> False
+    (EPatDefault, _) -> return True
+    (EPatLit patLit, val) -> do 
+      l <- transLit patLit
+      return $ l == val
+    (EPatIdent _, _) -> return True
+    (EPatHeadIdent _ pat, ValList (_:valTail)) -> isMatch env pat (ValList valTail)
+    (EPatHeadLit lit pat, ValList (hd:valTail)) -> do
+      l <- transLit lit
+      rest <- isMatch env pat (ValList valTail)
+      return $ hd == l && rest
+    (_, _) -> return False
 
 -- Add declarations from the pattern matching to the environment.
-addTopPatternToEnv :: TopPattern -> Value -> Env -> Env
+addTopPatternToEnv :: ETopPattern -> Value -> Env -> Env
 addTopPatternToEnv pat val env = case pat of
-  TopPat p -> addPatternToEnv p val env
-  TopAtPat ident p -> insert ident (AlreadyVal val) (addPatternToEnv p val env)
+  ETopPatternNo p -> addPatternToEnv p val env
+  ETopPatternAt ident p -> insert ident (AlreadyVal val) (addPatternToEnv p val env)
 
--- Already checked that the patterm matches the value/expr.
-addPatternToEnv :: Pattern -> Value -> Env -> Env
+-- Already checked that the patterm matches the value/expr,
+-- so no need to handle errors.
+addPatternToEnv :: EPattern -> Value -> Env -> Env
 addPatternToEnv pat val env = case pat of 
-  PatDefault -> env
-  PatValue _ -> env
-  PatIdent ident -> insert ident (AlreadyVal val) env
-  PatListHeadIdent ident pat -> case val of 
+  EPatDefault -> env
+  EPatLit _ -> env
+  EPatIdent ident -> insert ident (AlreadyVal val) env
+  EPatHeadIdent ident pat -> case val of 
       ValList (h:valTail) -> insert ident (AlreadyVal h) (addPatternToEnv pat (ValList valTail) env)
-  PatListHeadLit _ pat -> case val of 
+  EPatHeadLit _ pat -> case val of 
       ValList (_:valTail) -> addPatternToEnv pat (ValList valTail) env
 
-
+-- Evaluate expression to Value.
 transExpr :: Expr -> ReaderT Env Err Value
 transExpr x = case x of
-  EVar ident@(Ident idString) -> do
-    env <- ask
-    value <- case lookup ident env of
-            Just (AlreadyVal val) -> return val
-            Just (LazyVal expr lazyEnv) -> local (\_ -> lazyEnv) (transExpr expr)
-            Nothing -> fail $ "Variable undeclared: " ++ idString
-    return value
-  ELit lit -> transLit lit
-
-  EApp expr1 argExpr -> do
-    fun <- transExpr expr1 
-    env <- ask
-    case fun of 
-      ValLambda binds (LazyVal lazyExpr bodyEnv) -> 
-          case binds of
-              ident:[] -> local (\e -> insert ident (LazyVal argExpr e) bodyEnv) (transExpr lazyExpr)
-              ident:otherBinds -> return $ ValLambda otherBinds (LazyVal lazyExpr (insert ident (LazyVal argExpr env) bodyEnv))
-    
-  ECons expr1 expr2 -> do
-    v1 <- transExpr expr1
-    ValList v2 <- transExpr expr2
-    return $ ValList (v1:v2)
 
 -- Integer operations --------------------
   Neg expr -> do
@@ -195,6 +138,34 @@ transExpr x = case x of
     ValBool b2 <- transExpr expr2
     return $ ValBool $ b1 || b2
 
+  -- Variable or function from env.
+  EVar ident@(Ident idString) -> do
+    env <- ask
+    value <- case lookup ident env of
+            Just (AlreadyVal val) -> return val
+            Just (LazyVal expr lazyEnv) -> local (\_ -> lazyEnv) (transExpr expr)
+            Nothing -> fail $ "Variable undeclared: " ++ idString
+    return value
+
+  -- Literals.
+  ELit lit -> transLit lit
+
+  -- Function application.
+  EApp expr1 argExpr -> do
+    fun <- transExpr expr1 
+    env <- ask
+    case fun of 
+      ValLambda binds (LazyVal lazyExpr bodyEnv) -> 
+          case binds of
+              ident:[] -> local (\e -> insert ident (LazyVal argExpr e) bodyEnv) (transExpr lazyExpr)
+              ident:otherBinds -> return $ ValLambda otherBinds (LazyVal lazyExpr (insert ident (LazyVal argExpr env) bodyEnv))
+    
+  -- List construction using ":".
+  ECons expr1 expr2 -> do
+    v1 <- transExpr expr1
+    ValList v2 <- transExpr expr2
+    return $ ValList (v1:v2)
+
   If expr1 expr2 expr3 -> do
     ValBool cond <- transExpr expr1
     case cond of
@@ -203,15 +174,17 @@ transExpr x = case x of
   Case expr alts -> do
     val <- transExpr expr 
     env <- ask
-    altPats <- mapM (\alt -> transEAlt alt) alts 
     let 
-      foldAux maybeMatched nextAlt@(Alt topPat altExpr) = 
+      foldAux maybeMatched nextAlt@(EAltCase topPat altExpr) = 
         case maybeMatched of
-          Just matchedAlt -> Just matchedAlt
-          Nothing -> if isMatchTop env topPat val then Just nextAlt else Nothing
-    case foldl foldAux Nothing altPats of
-      Nothing -> fail "Non-exhaustive pattern matching"
-      Just (Alt pat patExpr) -> local (addTopPatternToEnv pat val) (transExpr patExpr) 
+          Just matchedAlt -> return $ Just matchedAlt
+          Nothing -> do 
+            b <- isMatchTop env topPat val 
+            if b then return $ Just nextAlt else return Nothing
+    alt <- foldM foldAux Nothing alts 
+    case alt of
+      Nothing -> fail $ "Non-exhaustive pattern matching in case: no match for value " ++ show (val)
+      Just (EAltCase pat patExpr) -> local (addTopPatternToEnv pat val) (transExpr patExpr) 
 
   Lambda (BindMulti binds) expr -> do
     env <- ask
@@ -224,6 +197,8 @@ transExpr x = case x of
       Ok env -> local (\_ -> env) (transExpr expr)
       Bad err -> fail err
 
+-- Add declarations to environment, recursive declarations
+-- work because of Haskell's lazy evaluation.
 transDecl :: Decl -> StateT Env Err ()
 transDecl x = case x of
   VDecl ident ty expr -> do
@@ -234,14 +209,13 @@ transDecl x = case x of
     env <- get
     let newEnv = insert ident (AlreadyVal $ ValLambda args (LazyVal expr newEnv)) env 
     put newEnv 
-  DDecl ident constrargs constrdefs -> failureState x
+
+transProgWithEnv :: Env -> Prog -> Err Env
+transProgWithEnv e (Program decls) = 
+  foldM (\env -> \decl -> execStateT (transDecl decl) env) e decls 
 
 transProg :: Prog -> Err Env
-transProg (Program decls) = 
-  foldM (\env -> \decl -> execStateT (transDecl decl) env) empty decls 
+transProg = transProgWithEnv empty 
 
 evalExpr :: Env -> Expr -> Err Value
 evalExpr s exp = runReaderT (transExpr exp) s
-
-parseExpr :: String -> Err Value
-parseExpr s = pExpr (myLexer s) >>= evalExpr empty
