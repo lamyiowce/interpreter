@@ -9,6 +9,8 @@ import Control.Monad.Reader
 import Control.Monad.State
 import Data.Map.Lazy hiding (foldl, map)
 import ErrM
+
+-- Types representing values and lazy values. ---
 data Value = ValInt Integer | ValBool Bool | ValList [Value] | ValLambda [Ident] LazyValue deriving Eq
 data LazyValue = LazyVal Expr Env | AlreadyVal Value deriving (Eq)
 
@@ -22,21 +24,15 @@ instance Show LazyValue where
   show (LazyVal expr env) = printTree expr
   show (AlreadyVal val) = show val
 
-
-
-type Loc = Integer
+-- Environment: maps var/fun ids to lazy values - 
 type Env = Map Ident LazyValue
 
+-- Types for pattern matching. ------------------
 data Pattern = PatValue Value | PatDefault | PatIdent Ident | PatListHeadIdent Ident Pattern | PatListHeadLit Value Pattern
 data TopPattern = TopAtPat Ident Pattern | TopPat Pattern
 data Alternative = Alt TopPattern Expr
 
-failure :: Expr -> ReaderT Env Err Value
-failure x = fail $ "Not implemented yet: " ++ show x
-
-failureState :: Decl -> StateT Env Err ()
-failureState x = fail $ "Not implemented yet: " ++ show x
-
+-- Monadically convert parsed literal to a value.
 transLit :: Lit -> ReaderT Env Err Value
 transLit x = case x of
   LitInt integer -> return $ ValInt integer
@@ -46,6 +42,7 @@ transLit x = case x of
     litList <- mapM (\e -> transExpr e) exprs >>= (\valList -> return $ ValList valList)
     return litList
 
+-- Helper functions for interpreting binary operations.
 transAddOp :: Num a => AddOp -> a -> a -> a
 transAddOp x = case x of
   Plus -> (+)
@@ -65,6 +62,9 @@ transRelOp x = case x of
   EQU -> (==)
   NE -> (/=)
 
+-- Pattern matching. ----------------------------
+-- Functions for translating parsed patterns to 
+-- patterns with literals.
 transEAlt :: EAlt -> ReaderT Env Err Alternative
 transEAlt x = case x of
   EAltCase etoppattern expr -> do

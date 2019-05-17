@@ -51,8 +51,9 @@ NE.        RelOp ::= "!=" ;
 VDecl.  Decl ::= Ident "::" ETy "=" Expr ;
 FDecl.  Decl ::= Ident [Ident] "::" ETy "=" Expr ;
 separator nonempty Ident "" ;
+
 -- Algebraic data types ----------------------------------
-DDecl.            Decl ::= "data" Ident [ConstrArg] "=" [ConstrDef] ;
+DDecl.            Decl ::= "data" Ident "=" [ConstrDef] ;
 Constr.      ConstrDef ::= Ident [ConstrArg] ;
 ConstrArgDef.ConstrArg ::= Ident ;
 
